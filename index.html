@@ -1553,12 +1553,44 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                 
                 console.log('🔄 Fallback parsing input:', transcript);
                 
-                // IMPROVED: Shape parsing - exact 14 standard diamond shapes + Custom with fuzzy matching
+                // IMPROVED: Shape parsing - exact 14 standard diamond shapes + Custom with fuzzy matching + Hindi support
                 const standardDiamondShapes = ['Round', 'Princess', 'Cushion', 'Emerald', 'Oval', 'Pear', 'Marquise', 'Heart', 'Radiant', 'Asscher', 'Baguette', 'Trillion', 'Old European', 'Rose-cut', 'Custom'];
                 
                 // Function to find closest shape match
                 const findClosestShape = (input) => {
                     const lowerInput = input.toLowerCase();
+                    
+                    // Hindi shape words
+                    if (lowerInput.includes('aakaar') || lowerInput.includes('aakar') || lowerInput.includes('aakar')) {
+                        // Extract shape after "aakaar"
+                        const shapeAfterAakaar = input.match(/aakaar\s+(\w+)|aakar\s+(\w+)|aakar\s+(\w+)/i);
+                        if (shapeAfterAakaar) {
+                            const shapeWord = (shapeAfterAakaar[1] || shapeAfterAakaar[2] || shapeAfterAakaar[3]).toLowerCase();
+                            // Map Hindi shape words to English
+                            const hindiShapeMap = {
+                                'round': 'Round',
+                                'gol': 'Round',
+                                'princess': 'Princess',
+                                'cushion': 'Cushion',
+                                'emerald': 'Emerald',
+                                'oval': 'Oval',
+                                'pear': 'Pear',
+                                'marquise': 'Marquise',
+                                'heart': 'Heart',
+                                'radiant': 'Radiant',
+                                'asscher': 'Asscher',
+                                'baguette': 'Baguette',
+                                'trillion': 'Trillion',
+                                'custom': 'Custom',
+                                'khud': 'Custom',
+                                'banaya': 'Custom'
+                            };
+                            if (hindiShapeMap[shapeWord]) {
+                                return hindiShapeMap[shapeWord];
+                            }
+                        }
+                        return 'Custom'; // Default if shape not specified
+                    }
                     
                     // Check for "custom" first (exact match priority)
                     if (lowerInput.includes('custom')) {
@@ -1714,15 +1746,46 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     console.log(`💎 Shape found: "${matchedShape}"`);
                 }
                 
-                // Color parsing - store actual color names
+                // IMPROVED: Color parsing - store actual color names + Hindi support
                 const colorNames = ['white', 'yellow', 'orange', 'pink', 'blue', 'green', 'red', 'purple', 'black', 'brown', 'gray', 'grey'];
                 let foundColor = null;
                 
-                for (const colorName of colorNames) {
-                    if (lower.includes(colorName + ' color') || lower.includes(colorName + ' diamond') || 
-                        (lower.includes(colorName) && !lower.includes(colorName + ' shape'))) {
-                        foundColor = colorName.charAt(0).toUpperCase() + colorName.slice(1);
-                        break;
+                // Hindi color words
+                if (lower.includes('rang') || lower.includes('rang meela')) {
+                    // Extract color after "rang"
+                    const colorAfterRang = transcript.match(/rang\s+(\w+)|rang\s+meela/i);
+                    if (colorAfterRang) {
+                        const colorWord = colorAfterRang[1] ? colorAfterRang[1].toLowerCase() : 'meela';
+                        // Map Hindi color words to English
+                        const hindiColorMap = {
+                            'meela': 'Blue',
+                            'neela': 'Blue',
+                            'safed': 'White',
+                            'peela': 'Yellow',
+                            'hara': 'Green',
+                            'lal': 'Red',
+                            'gulabi': 'Pink',
+                            'narangi': 'Orange',
+                            'kala': 'Black',
+                            'bhura': 'Brown',
+                            'dhundhla': 'Gray'
+                        };
+                        if (hindiColorMap[colorWord]) {
+                            foundColor = hindiColorMap[colorWord];
+                        } else {
+                            foundColor = 'Blue'; // Default for "meela"
+                        }
+                    }
+                }
+                
+                // English color parsing
+                if (!foundColor) {
+                    for (const colorName of colorNames) {
+                        if (lower.includes(colorName + ' color') || lower.includes(colorName + ' diamond') || 
+                            (lower.includes(colorName) && !lower.includes(colorName + ' shape'))) {
+                            foundColor = colorName.charAt(0).toUpperCase() + colorName.slice(1);
+                            break;
+                        }
                     }
                 }
                 
@@ -1784,12 +1847,40 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     }
                 }
                 
-                // IMPROVED: Clarity parsing - exact 11 standard diamond clarity grades with fuzzy matching
+                // IMPROVED: Clarity parsing - exact 11 standard diamond clarity grades with fuzzy matching + Hindi support
                 const standardClarityGrades = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3'];
                 
                 // Function to find closest clarity grade match
                 const findClosestClarity = (input) => {
                     const upperInput = input.toUpperCase();
+                    
+                    // Hindi clarity words
+                    if (upperInput.includes('SPASHTATA') || upperInput.includes('SPASHTA') || upperInput.includes('SPASTA')) {
+                        // Extract clarity after "spashtata"
+                        const clarityAfterSpashtata = input.match(/spashtata\s+(\w+)|spashta\s+(\w+)|spasta\s+(\w+)/i);
+                        if (clarityAfterSpashtata) {
+                            const clarityWord = (clarityAfterSpashtata[1] || clarityAfterSpashtata[2] || clarityAfterSpashtata[3]).toUpperCase();
+                            // Map Hindi clarity words to English grades
+                            const hindiClarityMap = {
+                                'YADI': 'IF',
+                                'IF': 'IF',
+                                'FL': 'FL',
+                                'VVS1': 'VVS1',
+                                'VVS2': 'VVS2',
+                                'VS1': 'VS1',
+                                'VS2': 'VS2',
+                                'SI1': 'SI1',
+                                'SI2': 'SI2',
+                                'I1': 'I1',
+                                'I2': 'I2',
+                                'I3': 'I3'
+                            };
+                            if (hindiClarityMap[clarityWord]) {
+                                return hindiClarityMap[clarityWord];
+                            }
+                        }
+                        return 'IF'; // Default if clarity not specified
+                    }
                     
                     // Direct matches first
                     for (const grade of standardClarityGrades) {
@@ -1883,12 +1974,19 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     }
                 }
                 
-                // IMPROVED: Size parsing - multiple patterns
+                // IMPROVED: Size parsing - multiple patterns + Hindi support
                 const sizePatterns = [
                     /(\d+(?:\.\d+)?)\s*(?:mm|millimeter)/i,
                     /size\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*size/i,
-                    /(\d+(?:\.\d+)?)\s*(?:mm|millimeter)?\s*(?:size)?/i
+                    /(\d+(?:\.\d+)?)\s*(?:mm|millimeter)?\s*(?:size)?/i,
+                    // Hindi patterns
+                    /aakaar\s*(\d+(?:\.\d+)?)/i,
+                    /aakar\s*(\d+(?:\.\d+)?)/i,
+                    /aakar\s*(\d+(?:\.\d+)?)/i,
+                    /(\d+(?:\.\d+)?)\s*aakaar/i,
+                    /(\d+(?:\.\d+)?)\s*aakar/i,
+                    /(\d+(?:\.\d+)?)\s*aakar/i
                 ];
                 
                 for (const pattern of sizePatterns) {
@@ -1956,8 +2054,9 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     }
                 }
                 
-                // IMPROVED: Notes parsing - multiple patterns including delivery time patterns
+                // IMPROVED: Notes parsing - multiple patterns including delivery time patterns + Hindi support
                 const notesPatterns = [
+                    // English patterns
                     /(?:in notes?|note[sd]?|requirements?|special|needs? to be)\s+(.+?)(?:\.|$)/i,
                     /nodes?\s+(.+?)(?:\.|$)/i,
                     /notes?\s+(.+?)(?:\.|$)/i,
@@ -1982,7 +2081,20 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     /make\s*it\s*(.+?)(?:\.|$)/i,
                     /deliver\s*(.+?)(?:\.|$)/i,
                     /deliver\s*quickly/i,
-                    /make\s*it\s*deliver\s*quickly/i
+                    /make\s*it\s*deliver\s*quickly/i,
+                    // Hindi patterns
+                    /notes?\s+(.+?)(?:\s+aakaar|\s+rang|\s+spashtata|\s+carat|\s+price|\s*$)/i,
+                    /note\s+(.+?)(?:\s+aakaar|\s+rang|\s+spashtata|\s+carat|\s+price|\s*$)/i,
+                    /happy\s+(.+)/i,  // For "Happy Diwali" pattern
+                    /diwali/i,  // Direct Diwali mention
+                    /festival/i,  // Festival mentions
+                    /wishes/i,  // Wishes mentions
+                    /shubh\s+(.+)/i,  // Shubh (auspicious) mentions
+                    /mubarak\s+(.+)/i,  // Mubarak (blessed) mentions
+                    /badhai\s+(.+)/i,  // Badhai (congratulations) mentions
+                    /aashirwad\s+(.+)/i,  // Aashirwad (blessings) mentions
+                    /(?:jaldi|fast|quick)\s+(?:delivery|pahunchana)/i,  // Quick delivery in Hindi
+                    /(?:urgent|jaldi)\s+(.+)/i  // Urgent in Hindi
                 ];
                 
                 for (const pattern of notesPatterns) {
