@@ -1847,8 +1847,8 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     }
                 }
                 
-                // IMPROVED: Clarity parsing - exact 11 standard diamond clarity grades with fuzzy matching + Hindi support
-                const standardClarityGrades = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3'];
+                // IMPROVED: Clarity parsing - exact 12 standard diamond clarity grades with fuzzy matching + Hindi support
+                const standardClarityGrades = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3', 'BS'];
                 
                 // Function to find closest clarity grade match
                 const findClosestClarity = (input) => {
@@ -1901,6 +1901,7 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                         'I': 'I1',
                         'FL': 'FL',
                         'IF': 'IF',
+                        'BS': 'BS',  // NEW: BS clarity grade
                         'VB1': 'VVS1',
                         'VB2': 'VVS2',
                         'VV1': 'VVS1',
@@ -2654,7 +2655,7 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                                                 name="clarity"
                                                 value={formState.clarity}
                                                 onChange={handleInputChange}
-                                                placeholder="e.g., VVS-VS, IF"
+                                                placeholder="e.g., VVS-VS, IF, BS"
                                                 className="w-full p-2 bg-gray-900 border border-gray-600 rounded-md text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                             />
                                         </div>
