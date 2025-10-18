@@ -2201,42 +2201,67 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                         stream.getTracks().forEach(track => track.stop());
                     };
 
-                    // Fast silence detection with improved reliability
+                    // Mobile-friendly silence detection with relaxed settings
                     const recordingStartTime = performance.now();
-                    const MIN_RECORDING_TIME = 800; // Minimum recording time in ms
+                    const MIN_RECORDING_TIME = 1500; // Increased to 1.5s for mobile compatibility
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                     
                     try {
                         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
                         sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
                         analyserRef.current = audioContextRef.current.createAnalyser();
                         analyserRef.current.fftSize = 2048;
-                        analyserRef.current.smoothingTimeConstant = 0.8; // Smoother analysis
+                        analyserRef.current.smoothingTimeConstant = 0.85; // More smoothing for mobile
                         sourceNodeRef.current.connect(analyserRef.current);
 
                         const buffer = new Uint8Array(analyserRef.current.fftSize);
-                        const SILENCE_THRESHOLD = 20; // Increased from 12 for less sensitivity
-                        const SILENCE_MS = 1000; // Increased from 400ms to 1000ms
-                        let voiceDetected = false; // Track if voice was detected at all
+                        // More lenient settings for mobile devices
+                        const SILENCE_THRESHOLD = isMobile ? 15 : 20; 
+                        const SILENCE_MS = isMobile ? 1500 : 1200; // Longer silence wait on mobile
+                        let voiceDetected = false;
+                        let voiceActivityCount = 0; // Count voice activity frames
 
                         const tick = () => {
+                            if (!analyserRef.current) return; // Safety check
+                            
                             analyserRef.current.getByteTimeDomainData(buffer);
                             let maxAmp = 0;
+                            let avgAmp = 0;
                             for (let i = 0; i < buffer.length; i++) {
-                                maxAmp = Math.max(maxAmp, Math.abs(buffer[i] - 128));
+                                const amp = Math.abs(buffer[i] - 128);
+                                maxAmp = Math.max(maxAmp, amp);
+                                avgAmp += amp;
                             }
+                            avgAmp /= buffer.length;
+                            
                             const now = performance.now();
                             const recordingDuration = now - recordingStartTime;
                             
-                            if (maxAmp > SILENCE_THRESHOLD) {
+                            // Voice detected if either peak or average exceeds threshold
+                            if (maxAmp > SILENCE_THRESHOLD || avgAmp > (SILENCE_THRESHOLD / 3)) {
                                 lastVoiceTsRef.current = now;
                                 voiceDetected = true;
+                                voiceActivityCount++;
+                                console.log(`🎤 Voice detected (max: ${maxAmp.toFixed(1)}, avg: ${avgAmp.toFixed(1)})`);
                             }
                             
-                            // Only stop after minimum recording time and if voice was detected
+                            const silenceDuration = now - lastVoiceTsRef.current;
+                            
+                            // Only stop if:
+                            // 1. Minimum recording time passed
+                            // 2. Voice was detected multiple times (not just noise)
+                            // 3. Silence duration exceeded threshold
                             if (recordingDuration > MIN_RECORDING_TIME && 
-                                voiceDetected && 
-                                now - lastVoiceTsRef.current > SILENCE_MS) {
-                                console.log('🔇 Silence detected, stopping recording');
+                                voiceActivityCount > 5 && 
+                                silenceDuration > SILENCE_MS) {
+                                console.log(`🔇 Silence detected after ${voiceActivityCount} voice frames, stopping recording`);
+                                stopAudioRecording();
+                                return;
+                            }
+                            
+                            // Max recording time safety limit
+                            if (recordingDuration > 30000) { // 30 seconds max
+                                console.log('⏱️ Maximum recording time reached');
                                 stopAudioRecording();
                                 return;
                             }
@@ -2251,13 +2276,15 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     mediaRecorder.start();
                     setIsRecording(true);
                     setError('');
-                    console.log('🎤 Recording started');
+                    console.log(`🎤 Recording started (${isMobile ? 'Mobile' : 'Desktop'} mode)`);
 
+                    // Longer timeout for mobile devices
                     if (autoVoiceMode) {
+                        const timeout = isMobile ? 6000 : 5000; // 6s on mobile, 5s on desktop
                         recordingTimeoutRef.current = setTimeout(() => {
                             console.log('⏱️ Auto timeout reached');
                             stopAudioRecording();
-                        }, 4000); // Increased from 2500ms to 4000ms
+                        }, timeout);
                     }
                 } catch (error) {
                     console.error('Recording error:', error);
@@ -2399,18 +2426,25 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
 
                         {/* Voice Interface */}
                         {isRecording && (
-                            <div className="mb-4 bg-red-600 rounded-lg p-3 text-center">
-                                <div className="text-white font-semibold mb-2">
-                                    🎤 Listening...
+                            <div className="mb-4 bg-gradient-to-r from-red-600 to-red-700 rounded-lg p-4 text-center shadow-lg border-2 border-red-400 animate-pulse">
+                                <div className="flex items-center justify-center mb-2">
+                                    <div className="w-4 h-4 bg-white rounded-full mr-2 animate-pulse"></div>
+                                    <div className="text-white font-bold text-lg">
+                                        🎤 LISTENING NOW...
+                                    </div>
+                                    <div className="w-4 h-4 bg-white rounded-full ml-2 animate-pulse"></div>
                                 </div>
-                                <div className="text-red-200 text-sm mb-3">
-                                    {autoVoiceMode ? 'Tell me all your diamond requirements in one sentence' : 'Speak your diamond requirements'}
+                                <div className="text-red-100 text-sm mb-2 font-medium">
+                                    {autoVoiceMode ? 'Speak ALL your diamond requirements clearly' : 'Speak your diamond requirements clearly'}
+                                </div>
+                                <div className="text-red-200 text-xs mb-3">
+                                    💡 Tip: Speak clearly and wait 1 second after finishing
                                 </div>
                                 <button
                                     onClick={stopAudioRecording}
-                                    className="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                                    className="bg-white text-red-600 hover:bg-red-100 font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-lg text-base"
                                 >
-                                    <i className="fas fa-stop mr-2"></i>Stop Recording
+                                    <i className="fas fa-stop-circle mr-2"></i>TAP TO STOP
                                 </button>
                             </div>
                         )}
