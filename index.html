@@ -1553,14 +1553,19 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                 
                 console.log('🔄 Fallback parsing input:', transcript);
                 
-                // IMPROVED: Shape parsing - exact 14 standard diamond shapes with fuzzy matching
-                const standardDiamondShapes = ['Round', 'Princess', 'Cushion', 'Emerald', 'Oval', 'Pear', 'Marquise', 'Heart', 'Radiant', 'Asscher', 'Baguette', 'Trillion', 'Old European', 'Rose-cut'];
+                // IMPROVED: Shape parsing - exact 14 standard diamond shapes + Custom with fuzzy matching
+                const standardDiamondShapes = ['Round', 'Princess', 'Cushion', 'Emerald', 'Oval', 'Pear', 'Marquise', 'Heart', 'Radiant', 'Asscher', 'Baguette', 'Trillion', 'Old European', 'Rose-cut', 'Custom'];
                 
                 // Function to find closest shape match
                 const findClosestShape = (input) => {
                     const lowerInput = input.toLowerCase();
                     
-                    // Direct matches first
+                    // Check for "custom" first (exact match priority)
+                    if (lowerInput.includes('custom')) {
+                        return 'Custom';
+                    }
+                    
+                    // Direct matches for standard shapes
                     for (const shape of standardDiamondShapes) {
                         if (lowerInput.includes(shape.toLowerCase())) {
                             return shape;
@@ -1657,6 +1662,14 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                         'rose shape': 'Rose-cut',
                         'rosecut': 'Rose-cut',
                         
+                        // Custom variations
+                        'custom': 'Custom',
+                        'custom shape': 'Custom',
+                        'custom cut': 'Custom',
+                        'custom diamond': 'Custom',
+                        'custom made': 'Custom',
+                        'customized': 'Custom',
+                        
                         // Common mishearings
                         'rounds': 'Round',
                         'rounds shape': 'Round',
@@ -1675,6 +1688,7 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     }
                     
                     // Partial matching for common words
+                    if (lowerInput.includes('custom')) return 'Custom'; // Check custom first
                     if (lowerInput.includes('round')) return 'Round';
                     if (lowerInput.includes('princess')) return 'Princess';
                     if (lowerInput.includes('cushion')) return 'Cushion';
@@ -1720,7 +1734,7 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     if (colorMatch) result.color = colorMatch[1].toUpperCase();
                 }
                 
-                // IMPROVED: Carats parsing - multiple patterns including mm confusion
+                // IMPROVED: Carats parsing - multiple patterns including mm confusion and "caret is" pattern
                 const caratPatterns = [
                     /(\d+(?:\.\d+)?)\s*carats?/i,
                     /carats?\s*(\d+(?:\.\d+)?)/i,
@@ -1730,10 +1744,12 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     /(\d+(?:\.\d+)?)\s*carats?\s*is/i,
                     /carrot\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*carrot/i,
+                    /carrot\s*is\s*(\d+(?:\.\d+)?)/i,
                     /carrot\s*and\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*carrot\s*and/i,
                     /carrot\s*have\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*carrot\s*have/i,
+                    /caret\s*is\s*(\d+(?:\.\d+)?)/i,  // NEW: "caret is 2.75"
                     /caret\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*caret/i,
                     /caret\s*and\s*(\d+(?:\.\d+)?)/i,
@@ -1742,6 +1758,7 @@ Click OK to try automatic sharing, or Cancel to take a screenshot instead.
                     /(\d+(?:\.\d+)?)\s*caret\s*have/i,
                     /karat\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*karat/i,
+                    /karat\s*is\s*(\d+(?:\.\d+)?)/i,  // NEW: "karat is"
                     /karats?\s*(\d+(?:\.\d+)?)/i,
                     /(\d+(?:\.\d+)?)\s*karats?/i,
                     /carrot\s*(\d+(?:\.\d+)?)/i,
